@@ -1,0 +1,16 @@
+name: checks
+
+# Static checks only. Compilation, tests and plugin verification need the IntelliJ Platform
+# dependencies (about 7 GB) and the verifier's IDE set (about 22 GB), which do not fit a hosted
+# runner's ~14 GB, so those stay on a developer machine. This job downloads nothing but the
+# checkout and finishes in seconds, which keeps it free even on a private repository.
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check.py
