@@ -1,0 +1,15 @@
+<?xml version='1.0'?>
+<!-- Only the dim and the symbol are styled; the other areas stay readable without being recolored. -->
+<list>
+  <option name="TUNNELVISION_DIM">
+    <value>
+      <option name="FOREGROUND" value="6E7275"/>
+    </value>
+  </option>
+  <option name="TUNNELVISION_SYMBOL">
+    <value>
+      <option name="FOREGROUND" value="4FC1FF"/>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+</list>

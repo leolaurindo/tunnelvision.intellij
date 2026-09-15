@@ -1,0 +1,9 @@
+.gradle/
+build/
+out/
+.intellijPlatform/
+*.iml
+.idea/
+.kotlin/
+.hax-loop-logs/
+.hax-loop-stop

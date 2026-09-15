@@ -1,0 +1,3 @@
+<!-- Loaded only when the Kotlin plugin is installed. The integration itself is the
+     KotlinStructuralAdapter, which is chosen by language id. -->
+<idea-plugin/>

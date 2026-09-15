@@ -1,0 +1,68 @@
+<!-- Structural wiring only: id, name, vendor, version and description are declared in
+     build.gradle.kts (pluginConfiguration) so there is a single source of truth. -->
+<idea-plugin>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <!-- Optional language integrations: the descriptor is only loaded when the plugin is present. -->
+    <depends optional="true" config-file="tunnelvision-kotlin.xml">org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="tunnelvision-javascript.xml">JavaScript</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService
+            serviceImplementation="io.github.leolaurindo.tunnelvision.settings.TunnelVisionSettings"/>
+        <applicationService
+            serviceImplementation="io.github.leolaurindo.tunnelvision.core.TunnelVisionCore"/>
+
+        <!-- Focus state must not outlive the editor it belongs to. -->
+        <editorFactoryListener
+            implementation="io.github.leolaurindo.tunnelvision.core.EditorReleaseListener"/>
+
+        <applicationConfigurable
+            parentId="tools"
+            instance="io.github.leolaurindo.tunnelvision.settings.TunnelVisionConfigurable"/>
+
+        <notificationGroup id="TunnelVision" displayType="BALLOON"/>
+
+        <colorSettingsPage
+            implementation="io.github.leolaurindo.tunnelvision.ui.TunnelVisionColorSettingsPage"/>
+        <additionalTextAttributes scheme="Default" file="colorSchemes/TunnelVisionDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colorSchemes/TunnelVisionDarcula.xml"/>
+    </extensions>
+
+    <!-- The Kotlin integration reads Kotlin PSI only, which both plugin modes provide. -->
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK1="true" supportsK2="true"/>
+    </extensions>
+
+    <actions>
+        <action id="TunnelVision.Toggle"
+                class="io.github.leolaurindo.tunnelvision.actions.ToggleFocusAction"
+                text="Toggle Focus"
+                description="Keep or release focus on the symbol under the caret">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <action id="TunnelVision.Enable"
+                class="io.github.leolaurindo.tunnelvision.actions.EnableFocusAction"
+                text="Enable Focus"
+                description="Keep focus on the symbol under the caret"/>
+        <action id="TunnelVision.Disable"
+                class="io.github.leolaurindo.tunnelvision.actions.DisableFocusAction"
+                text="Disable Focus"
+                description="Release focus in the current editor"/>
+        <action id="TunnelVision.NextMatch"
+                class="io.github.leolaurindo.tunnelvision.actions.NextMatchAction"
+                text="Next Match"
+                description="Move the caret to the next matched line">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt DOWN"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <action id="TunnelVision.PreviousMatch"
+                class="io.github.leolaurindo.tunnelvision.actions.PreviousMatchAction"
+                text="Previous Match"
+                description="Move the caret to the previous matched line">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt UP"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

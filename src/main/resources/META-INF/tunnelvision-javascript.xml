@@ -1,0 +1,3 @@
+<!-- Loaded only when the JavaScript plugin is installed; TypeScript shares this integration.
+     The integration itself is the JavaScriptStructuralAdapter, chosen by language id. -->
+<idea-plugin/>
