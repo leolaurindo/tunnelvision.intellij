@@ -67,6 +67,12 @@ intellijPlatform {
             url = "https://github.com/leolaurindo"
         }
 
+        changeNotes = """
+            <ul>
+              <li>Initial release with PSI and word sources, context highlighting, navigation, and settings.</li>
+            </ul>
+        """.trimIndent()
+
         ideaVersion {
             sinceBuild = "252"
             untilBuild = provider { null }
@@ -76,6 +82,10 @@ intellijPlatform {
     // Indexes the settings and color pages for the IDE's Settings search. It boots a headless IDE
     // for about a minute, so it is not part of `test`.
     buildSearchableOptions = true
+
+    publishing {
+        token = providers.gradleProperty("publishToken")
+    }
 
     instrumentCode = false
 }
