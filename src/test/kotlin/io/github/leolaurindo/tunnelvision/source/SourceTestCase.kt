@@ -80,6 +80,7 @@ abstract class SourceTestCase : BasePlatformTestCase() {
 
     private fun describe(result: FocusResult): String = when (result) {
         is FocusResult.Matched -> "expected the source to be unavailable, but it matched ${result.symbol}"
+        is FocusResult.Batch -> "unexpected source batch"
         is FocusResult.Unavailable -> "expected matches, but the source is unavailable: ${result.reason}"
     }
 }

@@ -23,6 +23,10 @@ class FocusAreas(private val byArea: Map<HighlightArea, List<TextRange>>) {
 
     companion object {
 
+        fun combine(areas: List<FocusAreas>): FocusAreas = FocusAreas(
+            HighlightArea.entries.associateWith { area -> merge(areas.flatMap { it.ranges(area) }) },
+        )
+
         fun of(
             symbol: List<TextRange>,
             line: List<TextRange> = emptyList(),

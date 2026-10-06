@@ -24,8 +24,11 @@ class TunnelVisionCore {
     private val sessions = ConcurrentHashMap<Editor, FocusSession>()
 
     /** @return the state of the editor, reusing the one it already has. */
-    fun activate(editor: Editor): EditorFocusState {
-        sessions[editor]?.let { return it.state }
+    fun activate(editor: Editor, pin: Boolean = false, replace: Boolean = true): EditorFocusState {
+        sessions[editor]?.let {
+            it.activate(replace = replace, pin = pin)
+            return it.state
+        }
 
         val session = FocusSession(
             state = EditorFocusState(editor),
@@ -33,8 +36,18 @@ class TunnelVisionCore {
             computationProvider = { computation },
         )
         sessions[editor] = session
-        session.start()
+        session.start(pin)
         return session.state
+    }
+
+    /** Adds a configured track, or a fixed pin, without replacing existing focus. */
+    fun add(editor: Editor, pin: Boolean = false) {
+        activate(editor, pin = pin, replace = false)
+    }
+
+    fun remove(editor: Editor) {
+        val session = sessions[editor] ?: return
+        if (!session.remove()) deactivate(editor)
     }
 
     /** Detaches the editor's listeners and cancels its pending and in-flight work. */

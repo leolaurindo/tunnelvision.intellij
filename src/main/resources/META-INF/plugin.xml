@@ -45,7 +45,25 @@
         <action id="TunnelVision.Enable"
                 class="io.github.leolaurindo.tunnelvision.actions.EnableFocusAction"
                 text="Enable Focus"
-                description="Keep focus on the symbol under the caret"/>
+                description="Replace existing tracks with the symbol under the caret"/>
+        <action id="TunnelVision.Add"
+                class="io.github.leolaurindo.tunnelvision.actions.AddFocusAction"
+                text="Add Focus"
+                description="Track another symbol without releasing existing focus">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <action id="TunnelVision.Pin"
+                class="io.github.leolaurindo.tunnelvision.actions.PinFocusAction"
+                text="Pin Focus"
+                description="Keep a fixed symbol alongside dynamic focus">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <action id="TunnelVision.Remove"
+                class="io.github.leolaurindo.tunnelvision.actions.RemoveFocusAction"
+                text="Remove Focus"
+                description="Remove the track under the caret or the most recent track">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
         <action id="TunnelVision.Disable"
                 class="io.github.leolaurindo.tunnelvision.actions.DisableFocusAction"
                 text="Disable Focus"
@@ -53,14 +71,14 @@
         <action id="TunnelVision.NextMatch"
                 class="io.github.leolaurindo.tunnelvision.actions.NextMatchAction"
                 text="Next Match"
-                description="Move the caret to the next matched line">
+                description="Move the caret to the next occurrence across all tracks">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt DOWN"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
         <action id="TunnelVision.PreviousMatch"
                 class="io.github.leolaurindo.tunnelvision.actions.PreviousMatchAction"
                 text="Previous Match"
-                description="Move the caret to the previous matched line">
+                description="Move the caret to the previous occurrence across all tracks">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt UP"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>

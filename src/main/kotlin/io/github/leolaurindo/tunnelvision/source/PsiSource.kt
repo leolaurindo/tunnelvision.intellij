@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -65,7 +66,11 @@ class PsiSource : FocusComputation {
 
         val occurrences = ranges.distinct().sortedBy { it.startOffset }
         val areas = Areas.ofPsi(editor.document, file, adapter, occurrences, request.areas)
-        return FocusResult.Matched(target.name, areas)
+        val pointers = SmartPointerManager.getInstance(project)
+        return FocusResult.Matched(
+            target.name, areas,
+            pointers.createSmartPsiElementPointer(element) to pointers.createSmartPsiElementPointer(function),
+        )
     }
 
     /**

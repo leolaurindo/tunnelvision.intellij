@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import io.github.leolaurindo.tunnelvision.core.TunnelVisionCore
 
-class EnableFocusAction : AnAction() {
+class AddFocusAction : AnAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -16,6 +16,6 @@ class EnableFocusAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val editor = ToggleFocusAction.editorOf(event) ?: return
-        TunnelVisionCore.getInstance().activate(editor)
+        TunnelVisionCore.getInstance().add(editor)
     }
 }

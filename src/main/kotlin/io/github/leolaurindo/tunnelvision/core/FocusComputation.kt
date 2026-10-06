@@ -21,7 +21,10 @@ data class FocusRequest(
 sealed interface FocusResult {
 
     /** [symbol] resolved to [areas], in document order. */
-    data class Matched(val symbol: String, val areas: FocusAreas) : FocusResult
+    data class Matched(val symbol: String, val areas: FocusAreas, val identity: Any = symbol) : FocusResult
+
+    /** One atomic refresh of all tracks; never published as editor state. */
+    data class Batch(val results: List<FocusResult>) : FocusResult
 
     /**
      * The configured source cannot answer. [reason] explains why, and [report] marks the reasons

@@ -1,5 +1,6 @@
 package io.github.leolaurindo.tunnelvision.ui
 
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -29,10 +30,25 @@ object FocusColors {
 
     /**
      * @return the attributes [key] is styled with in [scheme], with any translucency blended into
-     *   [background], or an empty [TextAttributes] when the scheme styles nothing with it.
+     *   [background]. Missing dim/symbol styles use theme-derived defaults; explicit empty styles
+     *   remain empty.
      */
     fun resolve(key: TextAttributesKey, scheme: EditorColorsScheme, background: Color): TextAttributes =
-        scheme.getAttributes(key).blendedInto(background)
+        (scheme.getAttributes(key) ?: defaults(key, scheme, background)).blendedInto(background)
+
+    private fun defaults(key: TextAttributesKey, scheme: EditorColorsScheme, background: Color): TextAttributes =
+        when (key) {
+            DIM -> scheme.defaultForeground.let { foreground ->
+                TextAttributes(Color(foreground.red, foreground.green, foreground.blue, 110), null, null, null, 0)
+            }
+            SYMBOL -> TextAttributes(
+                null,
+                scheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES)?.backgroundColor
+                    ?: blend(Color(210, 160, 50, 90), background),
+                null, null, 0,
+            )
+            else -> TextAttributes()
+        }
 
     /**
      * IntelliJ paints highlighter colors opaquely, so opacity is simulated by blending the color

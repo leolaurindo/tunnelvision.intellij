@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.progress.ProgressManager
 import io.github.leolaurindo.tunnelvision.settings.FocusMode
 import io.github.leolaurindo.tunnelvision.settings.HighlightArea
 import io.github.leolaurindo.tunnelvision.settings.TunnelVisionSettings
@@ -30,12 +31,16 @@ class FocusSession(
 
     /** Whether the reason the source cannot answer has already been reported. */
     private var reported = false
+    private var dynamicOffset: Int? = null
+    private val activations = mutableListOf<Activation>()
+
+    private data class Activation(val offset: Int, val mode: FocusMode, val replace: Boolean)
 
     private val caretListener = object : CaretListener {
         override fun caretPositionChanged(event: CaretEvent) {
             // Static focus keeps the symbol selected on activation; only dynamic focus retargets.
-            if (settingsProvider().state.mode != FocusMode.DYNAMIC) return
-            state.anchorOffset = state.editor.caretModel.offset
+            if (state.tracks.none { it.mode == FocusMode.DYNAMIC }) return
+            dynamicOffset = state.editor.caretModel.offset
             // The anchor moved, so a result that is still in flight describes the old symbol and
             // must not survive the debounce.
             state.nextVersion()
@@ -47,7 +52,9 @@ class FocusSession(
         override fun documentChanged(event: DocumentEvent) {
             // The anchor follows the text it was placed on, so a static symbol survives edits
             // elsewhere in the file instead of drifting onto whatever moved into its offset.
-            state.anchorOffset = event.shiftAnchor(state.anchorOffset)
+            state.tracks.forEach { it.anchorOffset = event.shiftAnchor(it.anchorOffset) }
+            dynamicOffset = dynamicOffset?.let { event.shiftAnchor(it) }
+            activations.replaceAll { it.copy(offset = event.shiftAnchor(it.offset)) }
             // The text an in-flight result was computed against is already gone, so drop it.
             state.nextVersion()
             schedule()
@@ -69,7 +76,10 @@ class FocusSession(
     }
 
     /** Starts listening and computes the first result for the caret position. */
-    fun start() {
+    fun start(pin: Boolean = false) {
+        val mode = if (pin) FocusMode.STATIC else settingsProvider().state.mode
+        state.tracks.clear()
+        state.tracks += FocusTrack(state.editor.caretModel.offset, mode)
         state.editor.caretModel.addCaretListener(caretListener, state.lifetime)
         state.editor.document.addDocumentListener(documentListener, state.lifetime)
         refreshNow()
@@ -82,8 +92,7 @@ class FocusSession(
     }
 
     /**
-     * Moves the caret to the next or previous matched line, wrapping around, and lands on the
-     * occurrence when that line has one.
+     * Moves the caret to the next or previous occurrence across all tracks, wrapping around.
      *
      * @return whether the caret moved.
      */
@@ -91,25 +100,23 @@ class FocusSession(
         val matched = state.result as? FocusResult.Matched ?: return false
 
         val document = state.editor.document
-        val occurrences = matched.areas.ranges(HighlightArea.SYMBOL)
+        val offsets = matched.areas.ranges(HighlightArea.SYMBOL)
             .filter { it.endOffset <= document.textLength }
-        val lines = occurrences.map { document.getLineNumber(it.startOffset) }.distinct().sorted()
-        if (lines.isEmpty()) return false
+            .map { it.startOffset }.distinct().sorted()
+        if (offsets.isEmpty()) return false
 
-        val caretLine = document.getLineNumber(state.editor.caretModel.offset)
-        val target = if (forward) {
-            lines.firstOrNull { it > caretLine } ?: lines.first()
+        val caretOffset = state.editor.caretModel.offset
+        val offset = if (forward) {
+            offsets.firstOrNull { it > caretOffset } ?: offsets.first()
         } else {
-            lines.lastOrNull { it < caretLine } ?: lines.last()
+            offsets.lastOrNull { it < caretOffset } ?: offsets.last()
         }
-        val offset = occurrences.firstOrNull { document.getLineNumber(it.startOffset) == target }?.startOffset
-            ?: document.getLineStartOffset(target)
 
         state.editor.caretModel.moveToOffset(offset)
         return true
     }
 
-    /** Recomputes occurrences for [EditorFocusState.anchorOffset] right now. */
+    /** Recomputes every track and any candidate target as one cancellable generation. */
     fun refreshNow() {
         if (state.isDisposed) return
         val settings = settingsProvider()
@@ -122,28 +129,111 @@ class FocusSession(
             return
         }
 
+        debouncer.cancel()
         val computation = computationProvider()
-        val request = FocusRequest(
-            version = state.nextVersion(),
-            caretOffset = state.anchorOffset,
-            mode = settings.state.mode,
-            source = settings.state.source,
-            scope = settings.state.scope,
-            areas = settings.state.areas.toSet(),
-        )
-        runner.run(state, { computation.compute(state.editor, request) }) { result ->
-            accept(request, result)
+        val version = state.nextVersion()
+        val tracks = state.tracks.toList()
+        val candidates = activations.toList()
+        val movingOffset = dynamicOffset
+        val requests = tracks.map { request(version, it.anchorOffset, it.mode, settings) } +
+            candidates.map { request(version, it.offset, it.mode, settings) } +
+            listOfNotNull(movingOffset?.let { request(version, it, FocusMode.DYNAMIC, settings) })
+
+        runner.run(state, {
+            FocusResult.Batch(requests.map {
+                ProgressManager.checkCanceled()
+                computation.compute(state.editor, it)
+            })
+        }) { batch ->
+            if (version != state.version || state.isDisposed) return@run
+            val results = (batch as FocusResult.Batch).results
+            tracks.zip(results).forEach { (track, result) -> track.result = result }
+            candidates.forEachIndexed { index, candidate ->
+                val extra = results[tracks.size + index]
+                if (extra is FocusResult.Matched) {
+                    val duplicate = if (candidate.replace) null else state.tracks.firstOrNull {
+                        it.mode == candidate.mode && (it.result as? FocusResult.Matched)?.identity == extra.identity
+                    }
+                    if (candidate.replace) state.tracks.clear()
+                    if (duplicate == null) {
+                        if (candidate.mode == FocusMode.DYNAMIC) {
+                            state.tracks.removeAll { it.mode == FocusMode.DYNAMIC }
+                        }
+                        state.tracks += FocusTrack(candidate.offset, candidate.mode).also { it.result = extra }
+                    }
+                } else if (extra is FocusResult.Unavailable && extra.report) {
+                    report(extra.reason)
+                }
+            }
+            val moving = state.tracks.firstOrNull { it.mode == FocusMode.DYNAMIC }
+            val retargeted = results.getOrNull(tracks.size + candidates.size)
+            if (moving != null && retargeted is FocusResult.Matched) {
+                moving.anchorOffset = checkNotNull(movingOffset)
+                moving.result = retargeted
+            }
+            activations.clear()
+            dynamicOffset = null
+            publish()
         }
+    }
+
+    private fun request(version: Long, offset: Int, mode: FocusMode, settings: TunnelVisionSettings): FocusRequest =
+        FocusRequest(version, offset, mode, settings.state.source, settings.state.scope, settings.state.areas.toSet())
+
+    /** Resolve a new target before replacing or appending tracks. Invalid activation preserves them. */
+    fun activate(replace: Boolean = false, pin: Boolean = false) {
+        activations += Activation(
+            state.editor.caretModel.offset,
+            if (pin) FocusMode.STATIC else settingsProvider().state.mode,
+            replace,
+        )
+        dynamicOffset = null
+        refreshNow()
+    }
+
+    /** Removes the newest track at the caret, or the newest track when away from occurrences. */
+    fun remove(): Boolean {
+        val offset = state.editor.caretModel.offset
+        val tracked = state.tracks.lastOrNull {
+            val ranges = (it.result as? FocusResult.Matched)?.areas?.ranges(HighlightArea.SYMBOL).orEmpty()
+            it.anchorOffset == offset || ranges.any { range -> range.containsOffset(offset) }
+        }
+        val pending = activations.lastOrNull { it.offset == offset }
+            ?: if (tracked == null) activations.lastOrNull() else null
+        if (pending != null) {
+            activations.remove(pending)
+        } else {
+            val track = tracked ?: state.tracks.lastOrNull() ?: return false
+            state.tracks.remove(track)
+        }
+        state.nextVersion()
+        debouncer.cancel()
+        dynamicOffset = null
+        publish()
+        val active = state.tracks.isNotEmpty() || activations.isNotEmpty()
+        if (active) refreshNow()
+        return active
     }
 
     fun dispose() {
         renderer.clear()
+        activations.clear()
+        dynamicOffset = null
+        state.tracks.clear()
+        state.result = null
         state.dispose()
     }
 
-    private fun accept(request: FocusRequest, result: FocusResult) {
-        // A newer request, a released editor or a disposed session all make this result stale.
-        if (request.version != state.version || state.isDisposed) return
+    private fun publish() {
+        val matches = state.tracks.mapNotNull { it.result as? FocusResult.Matched }
+        val result = when (matches.size) {
+            0 -> state.tracks.mapNotNull { it.result as? FocusResult.Unavailable }.firstOrNull()
+                ?: FocusResult.Unavailable("no tracked symbols")
+            1 -> matches.single()
+            else -> FocusResult.Matched(
+                matches.joinToString { it.symbol }, FocusAreas.combine(matches.map { it.areas }),
+            )
+        }
         state.result = result
         render(result)
     }
@@ -154,6 +244,8 @@ class FocusSession(
                 reported = false
                 renderer.render(result.areas, settingsProvider().state.areas.toSet())
             }
+
+            is FocusResult.Batch -> error("a batch must be combined before rendering")
 
             is FocusResult.Unavailable -> {
                 renderer.clear()

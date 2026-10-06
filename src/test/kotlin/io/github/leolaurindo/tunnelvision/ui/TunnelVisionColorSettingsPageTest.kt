@@ -30,7 +30,10 @@ class TunnelVisionColorSettingsPageTest : BasePlatformTestCase() {
 
         assertNotNull("the Default scheme must be loaded", scheme)
         assertFalse(scheme!!.getAttributes(FocusColors.DIM).isEmpty)
-        assertFalse(scheme.getAttributes(FocusColors.SYMBOL).isEmpty)
+        val symbol = scheme.getAttributes(FocusColors.SYMBOL)
+        assertNotNull(symbol.backgroundColor)
+        assertNull("the default symbol style must preserve syntax foreground", symbol.foregroundColor)
+        assertEquals(0, symbol.fontType)
     }
 
     fun testTheOtherShippedAreasAreKeptReadableWithoutBeingRecolored() {

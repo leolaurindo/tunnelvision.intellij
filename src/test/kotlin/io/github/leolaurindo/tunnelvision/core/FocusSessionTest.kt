@@ -37,7 +37,7 @@ class FocusSessionTest : BasePlatformTestCase() {
         val session = startSession(FocusMode.STATIC)
 
         assertEquals(1, computation.requests.size)
-        assertEquals(session.state.anchorOffset, computation.requests.single().caretOffset)
+        assertEquals(session.state.tracks.single().anchorOffset, computation.requests.single().caretOffset)
         assertEquals(0, debouncer.scheduleCount)
     }
 
@@ -54,7 +54,7 @@ class FocusSessionTest : BasePlatformTestCase() {
         assertEquals(1, computation.requests.size)
 
         debouncer.fire()
-        assertEquals(2, computation.requests.size)
+        assertEquals(3, computation.requests.size)
         assertEquals(23, computation.requests.last().caretOffset)
     }
 
@@ -66,8 +66,8 @@ class FocusSessionTest : BasePlatformTestCase() {
         assertEquals(0, debouncer.scheduleCount)
         assertEquals(1, computation.requests.size)
         // The caret moved to 23 but focus stayed anchored where it was activated.
-        assertEquals(0, session.state.anchorOffset)
-        assertEquals(computation.requests.single().caretOffset, session.state.anchorOffset)
+        assertEquals(0, session.state.tracks.single().anchorOffset)
+        assertEquals(computation.requests.single().caretOffset, session.state.tracks.single().anchorOffset)
     }
 
     fun testDocumentChangesRefreshWithoutRetargeting() {
@@ -81,7 +81,7 @@ class FocusSessionTest : BasePlatformTestCase() {
 
         debouncer.fire()
         assertEquals(2, computation.requests.size)
-        assertEquals(session.state.anchorOffset, computation.requests.last().caretOffset)
+        assertEquals(session.state.tracks.single().anchorOffset, computation.requests.last().caretOffset)
     }
 
     fun testDisposalDetachesListenersAndStopsRefreshing() {
@@ -118,7 +118,7 @@ class FocusSessionTest : BasePlatformTestCase() {
         debouncer.fire()
 
         // Focus still points at `count`, which the edit only moved further down.
-        assertEquals(symbolOffset + inserted.length, session.state.anchorOffset)
+        assertEquals(symbolOffset + inserted.length, session.state.tracks.single().anchorOffset)
         assertEquals(symbolOffset + inserted.length, computation.requests.last().caretOffset)
     }
 
@@ -129,7 +129,7 @@ class FocusSessionTest : BasePlatformTestCase() {
 
         insertAt(symbolOffset, " ")
 
-        assertEquals(symbolOffset + 1, session.state.anchorOffset)
+        assertEquals(symbolOffset + 1, session.state.tracks.single().anchorOffset)
     }
 
     fun testStaticAnchorStaysOnItsSymbolWhenTextIsDeletedAboveIt() {
@@ -141,7 +141,7 @@ class FocusSessionTest : BasePlatformTestCase() {
         deleteRange(deletedAbove)
 
         // The anchored word is untouched and has only moved up with the text around it.
-        assertEquals(symbolOffset - deletedAbove.length, session.state.anchorOffset)
+        assertEquals(symbolOffset - deletedAbove.length, session.state.tracks.single().anchorOffset)
     }
 
     fun testStaticAnchorLandsOnTheEditWhenItsOwnTextIsDeleted() {
@@ -153,7 +153,7 @@ class FocusSessionTest : BasePlatformTestCase() {
         deleteRange(declaration)
 
         // The anchored word itself is gone, so focus falls back to where the edit began.
-        assertEquals(deletedAt, session.state.anchorOffset)
+        assertEquals(deletedAt, session.state.tracks.single().anchorOffset)
     }
 
     private fun insertAt(offset: Int, text: String) {
@@ -440,7 +440,7 @@ private class DeferredRunner : RefreshRunner {
     }
 
     fun deliver(result: FocusResult) {
-        pending.removeFirst()(result)
+        pending.removeFirst()(FocusResult.Batch(listOf(result)))
     }
 }
 

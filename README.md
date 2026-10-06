@@ -6,9 +6,9 @@ TunnelVision is a symbol-focused reading mode for IntelliJ IDEA. It dims code ou
 
 - Semantic PSI matching for Java, Kotlin, JavaScript, and TypeScript.
 - Whole-file lexical word matching, including comments and strings.
-- Static focus or dynamic retargeting as the caret moves.
+- Multiple static tracks, or dynamic caret tracking alongside fixed pins.
 - Configurable symbol, line, statement, and scope-head context.
-- Next/previous match navigation with wraparound.
+- Next/previous occurrence navigation across all tracks, with wraparound.
 - Native editor color-scheme settings.
 
 ## Requirements
@@ -19,8 +19,30 @@ TunnelVision is a symbol-focused reading mode for IntelliJ IDEA. It dims code ou
 ## Use
 
 1. Place the caret on a symbol and invoke **Toggle Focus** from the editor context menu.
-2. Use **Next Match** (`Ctrl+Alt+Down`) and **Previous Match** (`Ctrl+Alt+Up`) to navigate occurrences.
-3. Configure behavior in **Settings | Tools | TunnelVision** and colors in **Settings | Editor | Color Scheme | TunnelVision**.
+2. Move to another symbol and invoke **Add Focus** to track it without releasing existing focus.
+3. Use **Next Match** (`Ctrl+Alt+Down`) and **Previous Match** (`Ctrl+Alt+Up`) to navigate all tracked occurrences.
+4. Configure behavior in **Settings | Tools | TunnelVision** and colors in **Settings | Editor | Color Scheme | TunnelVision**.
+
+No configuration is required: unrelated code is dimmed, related statements keep their
+syntax colors, and tracked symbols get a search-like background. Line and scope-head
+context are optional; colors remain editable in the native color-scheme settings.
+
+| Action | Behavior |
+| --- | --- |
+| **Enable Focus** | Replace existing tracks with the symbol under the caret. |
+| **Add Focus** | Add a track using the configured mode; repeated targets are ignored. |
+| **Pin Focus** | Add a fixed track even when dynamic mode is configured. |
+| **Remove Focus** | Remove the track under the caret, otherwise the most recent track. |
+| **Disable Focus** | Clear every track in the editor. |
+| **Toggle Focus** | Enable when inactive; disable when active. |
+
+Dynamic mode keeps one moving track alongside any fixed pins. Moving onto whitespace
+or an unresolved symbol keeps its last valid target. Adding another dynamic target
+replaces only the moving track, not the pins. Each track keeps the mode it was created
+with; changing the configured mode affects new tracks. Other behavior settings and
+colors apply to existing tracks. Failed Add/Enable operations preserve existing focus.
+All actions are available through **Find Action**; Add, Pin, and Remove also appear in
+the editor context menu.
 
 `psi` is the default source: it resolves references within the enclosing named function. `word` matches the exact word throughout the complete file and intentionally includes comments and strings.
 

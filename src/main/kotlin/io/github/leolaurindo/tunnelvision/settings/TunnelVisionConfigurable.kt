@@ -56,7 +56,7 @@ internal class TunnelVisionSettingsPanel {
     )
 
     val component: JComponent = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Focus mode:", mode)
+        .addLabeledComponent("Mode for new tracks:", mode)
         .addLabeledComponent("Occurrences from:", source)
         .addLabeledComponent("Scope:", scope)
         .addLabeledComponent("Highlight areas:", areaBoxes())

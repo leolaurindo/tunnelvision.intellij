@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.leolaurindo"
-version = "0.1.0"
+version = "0.1.1"
 
 repositories {
     mavenCentral()
@@ -69,7 +69,9 @@ intellijPlatform {
 
         changeNotes = """
             <ul>
-              <li>Initial release with PSI and word sources, context highlighting, navigation, and settings.</li>
+              <li>Improved default dimming and search-like symbol backgrounds while preserving syntax colors.</li>
+              <li>Added additive tracking with Add, Pin, and Remove Focus actions, including dynamic focus alongside fixed pins.</li>
+              <li>Match navigation now visits occurrences across all tracked symbols.</li>
             </ul>
         """.trimIndent()
 

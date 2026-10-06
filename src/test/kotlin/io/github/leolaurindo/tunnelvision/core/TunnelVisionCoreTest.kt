@@ -3,6 +3,7 @@ package io.github.leolaurindo.tunnelvision.core
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import io.github.leolaurindo.tunnelvision.settings.FocusMode
 
 class TunnelVisionCoreTest : BasePlatformTestCase() {
 
@@ -20,6 +21,26 @@ class TunnelVisionCoreTest : BasePlatformTestCase() {
         assertFalse(core.toggle(editor))
         assertFalse(core.isActive(editor))
         assertNull(core.stateOf(editor))
+    }
+
+    fun testAddActivatesAnInactiveEditorAndRemovingLastTrackDisposesIt() {
+        myFixture.configureByText("Sample.java", "class Sample {}")
+        val core = TunnelVisionCore()
+        val editor = myFixture.editor
+        core.add(editor, pin = true)
+        val state = core.stateOf(editor)!!
+        try {
+            assertTrue(core.isActive(editor))
+            assertEquals(FocusMode.STATIC, state.tracks.single().mode)
+
+            core.remove(editor)
+
+            assertFalse(core.isActive(editor))
+            assertTrue(state.isDisposed)
+            assertTrue(state.tracks.isEmpty())
+        } finally {
+            core.deactivate(editor)
+        }
     }
 
     fun testVersionsIncreaseSoStaleResultsCanBeRejected() {

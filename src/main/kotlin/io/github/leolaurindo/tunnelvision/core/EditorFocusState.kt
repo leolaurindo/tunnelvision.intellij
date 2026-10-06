@@ -3,6 +3,7 @@ package io.github.leolaurindo.tunnelvision.core
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import io.github.leolaurindo.tunnelvision.settings.FocusMode
 
 /**
  * Focus state for a single editor. One instance per editor that currently has focus enabled.
@@ -16,8 +17,8 @@ class EditorFocusState(val editor: Editor) {
     var version: Long = 0
         private set
 
-    /** Offset the symbol is selected at. Static focus keeps it, dynamic focus moves it. */
-    var anchorOffset: Int = editor.caretModel.offset
+    /** Independent anchors retained by this editor; at most one follows its primary caret. */
+    val tracks = mutableListOf<FocusTrack>()
 
     /** Last accepted result, or null while nothing has been computed yet. */
     var result: FocusResult? = null
@@ -31,4 +32,9 @@ class EditorFocusState(val editor: Editor) {
     fun dispose() {
         Disposer.dispose(lifetime)
     }
+}
+
+/** An independent symbol anchor; mode is captured when the track is activated. */
+class FocusTrack(var anchorOffset: Int, val mode: FocusMode) {
+    var result: FocusResult? = null
 }

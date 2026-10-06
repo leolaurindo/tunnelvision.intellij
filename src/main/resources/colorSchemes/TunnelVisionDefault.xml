@@ -8,8 +8,7 @@
   </option>
   <option name="TUNNELVISION_SYMBOL">
     <value>
-      <option name="FOREGROUND" value="0033B3"/>
-      <option name="FONT_TYPE" value="1"/>
+      <option name="BACKGROUND" value="FFF1B3"/>
     </value>
   </option>
 </list>
