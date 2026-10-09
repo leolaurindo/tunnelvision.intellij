@@ -83,13 +83,13 @@ class FocusRendererTest : BasePlatformTestCase() {
         assertEquals(SCOPE_HEAD_COLOR, attributesAt(range("void run()").startOffset)?.foregroundColor)
     }
 
-    fun testStaysAboveSyntaxAndBelowDiagnosticsAndSelection() {
+    fun testStaysAboveSemanticColorsAndBelowDiagnosticsAndSelection() {
         renderer.render(areas(), HighlightArea.entries.toSet())
 
         for (highlighter in highlighters()) {
             assertTrue(
                 "layer ${highlighter.layer} would hide diagnostics",
-                highlighter.layer > HighlighterLayer.SYNTAX && highlighter.layer < HighlighterLayer.WARNING,
+                highlighter.layer > HighlighterLayer.ADDITIONAL_SYNTAX && highlighter.layer < HighlighterLayer.WEAK_WARNING,
             )
             assertTrue("layer ${highlighter.layer} would hide the selection", highlighter.layer < HighlighterLayer.SELECTION)
         }

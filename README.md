@@ -23,9 +23,10 @@ TunnelVision is a symbol-focused reading mode for IntelliJ IDEA. It dims code ou
 3. Use **Next Match** (`Ctrl+Alt+Down`) and **Previous Match** (`Ctrl+Alt+Up`) to navigate all tracked occurrences.
 4. Configure behavior in **Settings | Tools | TunnelVision** and colors in **Settings | Editor | Color Scheme | TunnelVision**.
 
-No configuration is required: unrelated code is dimmed, related statements keep their
-syntax colors, and tracked symbols get a search-like background. Line and scope-head
-context are optional; colors remain editable in the native color-scheme settings.
+No configuration is required: unrelated code is dimmed, lines containing matches keep
+their syntax colors, and tracked symbols get a search-like background. Statement and
+scope-head context are optional; colors remain editable in the native color-scheme settings.
+Existing saved highlight-area choices remain unchanged when upgrading.
 
 | Action | Behavior |
 | --- | --- |

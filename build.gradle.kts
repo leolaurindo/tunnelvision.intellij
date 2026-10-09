@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.leolaurindo"
-version = "0.1.1"
+version = "0.1.2"
 
 repositories {
     mavenCentral()
@@ -69,9 +69,9 @@ intellijPlatform {
 
         changeNotes = """
             <ul>
-              <li>Improved default dimming and search-like symbol backgrounds while preserving syntax colors.</li>
-              <li>Added additive tracking with Add, Pin, and Remove Focus actions, including dynamic focus alongside fixed pins.</li>
-              <li>Match navigation now visits occurrences across all tracked symbols.</li>
+              <li>Fixed dimming being overridden by semantic syntax colors.</li>
+              <li>Default focus now retains matching lines and symbols; statement and scope-head context remain optional.</li>
+              <li>Hide the function-scope control in whole-file word mode.</li>
             </ul>
         """.trimIndent()
 

@@ -8,7 +8,7 @@ import org.junit.Test
 class TunnelVisionSettingsTest {
 
     @Test
-    fun `defaults retain statements and highlight symbols`() {
+    fun `defaults retain lines and highlight symbols`() {
         val state = TunnelVisionSettings.State()
 
         assertEquals(FocusMode.STATIC, state.mode)
@@ -16,7 +16,7 @@ class TunnelVisionSettingsTest {
         assertEquals(FocusScope.FUNCTION, state.scope)
         assertEquals(TunnelVisionSettings.DEFAULT_DEBOUNCE_MILLIS, state.debounceMillis)
         assertEquals(TunnelVisionSettings.DEFAULT_MAX_FILE_LINES, state.maxFileLines)
-        assertEquals(listOf(HighlightArea.STATEMENT, HighlightArea.SYMBOL), state.areas)
+        assertEquals(listOf(HighlightArea.LINE, HighlightArea.SYMBOL), state.areas)
     }
 
     @Test

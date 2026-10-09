@@ -1,7 +1,10 @@
 package io.github.leolaurindo.tunnelvision.settings
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.ui.UIUtil
 import io.github.leolaurindo.tunnelvision.core.TunnelVisionCore
+import javax.swing.JComboBox
+import javax.swing.JLabel
 
 /** Guards the settings page against dropping a setting on the way through its widgets. */
 class TunnelVisionSettingsPanelTest : BasePlatformTestCase() {
@@ -20,6 +23,31 @@ class TunnelVisionSettingsPanelTest : BasePlatformTestCase() {
         panel.setState(state)
 
         assertEquals(state, panel.state())
+    }
+
+    fun testScopeIsVisibleOnlyForPsiIncludingWhenLoadingSavedWordSettings() {
+        val panel = TunnelVisionSettingsPanel()
+        val boxes = UIUtil.findComponentsOfType(panel.component, JComboBox::class.java)
+        val source = boxes.single { it.selectedItem is MatchSource }
+        val scope = boxes.single { it.selectedItem is FocusScope }
+        val label = UIUtil.findComponentsOfType(panel.component, JLabel::class.java).single { it.text == "Scope:" }
+
+        assertTrue(scope.isVisible)
+        assertTrue(label.isVisible)
+
+        source.selectedItem = MatchSource.WORD
+        assertFalse(scope.isVisible)
+        assertFalse(label.isVisible)
+
+        source.selectedItem = MatchSource.PSI
+        assertTrue(scope.isVisible)
+        assertTrue(label.isVisible)
+        assertEquals(FocusScope.FUNCTION, panel.state().scope)
+
+        panel.setState(TunnelVisionSettings.State(source = MatchSource.WORD))
+        assertFalse(scope.isVisible)
+        assertFalse(label.isVisible)
+        assertEquals(MatchSource.WORD, panel.state().source)
     }
 
     fun testDefaultsComeBackUnchanged() {

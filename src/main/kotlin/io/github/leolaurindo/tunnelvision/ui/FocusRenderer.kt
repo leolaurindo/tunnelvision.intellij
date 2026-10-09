@@ -147,10 +147,10 @@ class FocusRenderer(private val editor: Editor, lifetime: Disposable) {
     companion object {
 
         /**
-         * Both layers sit above syntax coloring so the focus styles win, and below warnings, errors
-         * and the selection so diagnostics stay visible.
+         * Semantic colors use ADDITIONAL_SYNTAX, above lexer syntax. Both focus layers must win
+         * over those colors, but stay below weak warnings, errors, and selection.
          */
-        private const val DIM_LAYER = HighlighterLayer.SYNTAX + 1
+        private const val DIM_LAYER = HighlighterLayer.ADDITIONAL_SYNTAX + 1
 
         /** Composed from the broadest area to the narrowest, so no one area masks another. */
         private const val RETAINED_LAYER = DIM_LAYER + 1

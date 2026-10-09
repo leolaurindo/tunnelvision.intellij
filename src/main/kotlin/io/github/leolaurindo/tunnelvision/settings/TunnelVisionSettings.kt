@@ -54,7 +54,7 @@ class TunnelVisionSettings : PersistentStateComponent<TunnelVisionSettings.State
         var scope: FocusScope = FocusScope.FUNCTION,
         var debounceMillis: Int = DEFAULT_DEBOUNCE_MILLIS,
         var maxFileLines: Int = DEFAULT_MAX_FILE_LINES,
-        var areas: MutableList<HighlightArea> = mutableListOf(HighlightArea.STATEMENT, HighlightArea.SYMBOL),
+        var areas: MutableList<HighlightArea> = mutableListOf(HighlightArea.LINE, HighlightArea.SYMBOL),
     )
 
     private var state = State()
